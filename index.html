@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITUBE - Creator Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #09090b; color: white; font-family: sans-serif; }
+        .progress-bar { transition: width 0.2s ease-in-out; }
+        .verified-tick { color: #38bdf8; display: inline-block; margin-left: 4px; }
+    </style>
+</head>
+<body>
+
+    <nav class="flex justify-between items-center p-4 border-b border-zinc-800 bg-zinc-950 sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <span class="text-red-600 text-2xl">▶</span>
+            <span class="text-2xl font-black tracking-tighter">ITUBE</span>
+        </div>
+        <div id="nav-stats" class="text-sm font-bold text-zinc-400 bg-zinc-900 px-4 py-1 rounded-full border border-zinc-700">
+            Subs: <span id="stat-subs" class="text-white">0</span>
+        </div>
+    </nav>
+
+    <div id="banner-area" class="w-full h-48 bg-gradient-to-r from-zinc-800 to-zinc-900 relative group overflow-hidden">
+        <img id="banner-img" src="" class="w-full h-full object-cover hidden">
+        <label class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+            <span class="text-3xl">📷</span>
+            <span class="font-bold">Upload Channel Banner</span>
+            <input type="file" class="hidden" accept="image/*" onchange="uploadFile(event, 'banner-img')">
+        </label>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-6">
+        <div class="flex flex-col md:flex-row items-center gap-6 -mt-12 pb-8 border-b border-zinc-800">
+            <div class="relative group">
+                <div id="logo-placeholder" class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-zinc-700 border-4 border-zinc-950 flex items-center justify-center text-4xl font-bold overflow-hidden">
+                    <span id="logo-text">I</span>
+                    <img id="logo-img" src="" class="w-full h-full object-cover hidden">
+                </div>
+                <label class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer">
+                    <span>➕</span>
+                    <input type="file" class="hidden" accept="image/*" onchange="uploadFile(event, 'logo-img')">
+                </label>
+            </div>
+
+            <div class="text-center md:text-left pt-4 md:pt-14 flex-1">
+                <div class="flex items-center justify-center md:justify-start">
+                    <h1 id="channel-name" class="text-4xl font-black italic">ITUBE CREATOR</h1>
+                    <span id="verified-badge" class="hidden text-blue-400 text-2xl ml-2" title="Verified">✓</span>
+                </div>
+                <p class="text-zinc-400 text-lg font-bold mt-1">
+                    <span id="sub-count" class="text-white">0</span> subscribers
+                </p>
+            </div>
+
+            <div class="pt-10">
+                <button onclick="startUpload()" id="upload-btn" class="bg-white text-black px-8 py-3 rounded-full font-black hover:bg-zinc-200 transition-all active:scale-95 shadow-lg shadow-white/5">
+                    UPLOAD VIDEO
+                </button>
+            </div>
+        </div>
+
+        <div id="upload-box" class="hidden w-full bg-zinc-900 rounded-full h-3 mt-4 overflow-hidden border border-zinc-800">
+            <div id="progress-fill" class="progress-bar bg-blue-500 h-full w-0"></div>
+        </div>
+
+        <div class="mt-10 max-w-2xl mx-auto">
+            <h3 class="text-xl font-black mb-6 border-l-4 border-red-600 pl-3 uppercase tracking-widest">Community Feed</h3>
+            <div id="posts-container" class="space-y-6">
+                <p id="empty-msg" class="text-center text-zinc-600 py-10 font-bold italic">No posts yet. Upload a video to gain subs!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let subs = 0;
+        let isUploading = false;
+
+        // 1. Handle Image Uploads
+        function uploadFile(event, elementId) {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                const img = document.getElementById(elementId);
+                img.src = url;
+                img.classList.remove('hidden');
+                if (elementId === 'logo-img') {
+                    document.getElementById('logo-text').classList.add('hidden');
+                }
+            }
+        }
+
+        // 2. Handle Video Upload & Sub Gains
+        function startUpload() {
+            if (isUploading) return;
+            isUploading = true;
+            
+            const btn = document.getElementById('upload-btn');
+            const box = document.getElementById('upload-box');
+            const fill = document.getElementById('progress-fill');
+            
+            btn.innerText = "PROCESSING...";
+            btn.style.opacity = "0.5";
+            box.classList.remove('hidden');
+            
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                    completeUpload();
+                } else {
+                    width += 2;
+                    fill.style.width = width + "%";
+                }
+            }, 50);
+        }
+
+        function completeUpload() {
+            const btn = document.getElementById('upload-btn');
+            const box = document.getElementById('upload-box');
+            const fill = document.getElementById('progress-fill');
+
+            // Gain between 10k and 50k subs per video
+            const gain = Math.floor(Math.random() * 40000) + 10000;
+            subs += gain;
+
+            updateUI();
+            addPost(gain);
+
+            // Reset UI
+            btn.innerText = "UPLOAD VIDEO";
+            btn.style.opacity = "1";
+            box.classList.add('hidden');
+            fill.style.width = "0%";
+            isUploading = false;
+        }
+
+        // 3. Update Text and Ticks
+        function updateUI() {
+            document.getElementById('sub-count').innerText = subs.toLocaleString();
+            document.getElementById('stat-subs').innerText = subs.toLocaleString();
+
+            // Check for Blue Tick (100k)
+            if (subs >= 100000) {
+                document.getElementById('verified-badge').classList.remove('hidden');
+            }
+        }
+
+        // 4. Add Community Post
+        function addPost(gain) {
+            document.getElementById('empty-msg').classList.add('hidden');
+            const container = document.getElementById('posts-container');
+            const post = document.createElement('div');
+            
+            const tick = subs >= 100000 ? '<span class="text-blue-400">✓</span>' : '';
+            
+            post.className = "bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-xl";
+            post.innerHTML = `
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-zinc-700 overflow-hidden">
+                        <img src="${document.getElementById('logo-img').src}" class="${document.getElementById('logo-img').src ? '' : 'hidden'} w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <span class="font-black text-white uppercase tracking-tighter">ITUBE CREATOR ${tick}</span>
+                        <p class="text-xs text-zinc-500 font-bold">JUST NOW</p>
+                    </div>
+                </div>
+                <p class="text-xl font-medium mb-4">I just uploaded a new video and gained ${gain.toLocaleString()} new subscribers! We are now at ${subs.toLocaleString()}!</p>
+                <div class="flex gap-6 text-zinc-500 font-black text-sm">
+                    <button class="hover:text-white">👍 ${Math.floor(gain/10)} LIKES</button>
+                    <button class="hover:text-white">💬 COMMENTS</button>
+                </div>
+            `;
+            container.prepend(post);
+        }
+    </script>
+</body>
+</html>
